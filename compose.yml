@@ -1,0 +1,77 @@
+services:
+  mongo:
+    image: mongo
+    restart: always
+    command: ["--logpath", "/data/db/mongod.log", "--logappend"]
+    volumes:
+      - ./mongo/data:/data/db
+  postgres:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    command: ["postgres", "-c", "log_statement=all"]
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=development
+  user-service:
+    image: adalaws/user-service:latest
+    ports:
+      - '3002:3002'
+    volumes:
+      - ./user-service/logs:/logs
+    environment:
+      POSTGRES_HOST: "postgres"
+      POSTGRES_PORT: "5432"
+      POSTGRES_USERNAME: "postgres"
+      POSTGRES_DATABASE: "development"
+      POSTGRES_PASSWORD: "admin"
+      SECRET_KEY: <MY_SECRET_KEY>
+      PORT: "3002"
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+      LOG_LOCATION: "/logs"
+  deployment-service:
+    image: adalaws/deployment-service:latest
+    ports:
+      - '3001:3001'
+    volumes:
+      - ./deployment-service/logs:/logs
+      - ./shared:/user-website-assets
+    environment:
+      MONGODB_URI: "mongodb://mongo:27017/development"
+      SECRET_KEY: <MY_SECRET_KEY>
+      PORT: "3001"
+      USER_WEBSITE_ASSETS_LOCATION: "/user-website-assets"
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+      LOG_LOCATION: "/logs"
+      USER_SERVICE_HOST: "user-service"
+      USER_SERVICE_PORT: "3002"
+  generator-service:
+    image: adalaws/generator-service:latest
+    volumes:
+      - ./generator-service/output:/output
+      - ./generator-service/logs:/logs
+      - ./shared:/user-website-assets
+      - ./generator-service/assets:/static-assets
+    environment:
+      DEPLOYMENT_SERVICE_PORT: "3001"
+      USER_SERVICE_PORT: "3002"
+      HEALTH_CHECK_ON_STARTUP: "true"
+      MONGO_DB_URI: "mongodb://mongo:27017/development"
+      LOG_LOCATION: "/logs"
+      RESOURCES_OUTPUT_ROOT: "/output"
+      STATIC_ASSETS_LOCATION: "/static-assets"
+      USER_WEBSITE_ASSETS_LOCATION: "/user-website-assets"
+      USER_SERVICE_HOST: "user-service"
+      DEPLOYMENT_SERVICE_HOST: "deployment-service"
+      PORT: "8081"
+  web-app:
+    image: adalaws/web-app:latest
+    ports:
+      - '3000:3000'
+    environment:
+      REACT_APP_USER_SERVICE_PORT: "3002"
+      REACT_APP_USER_SERVICE_HOST: "localhost"
+      REACT_APP_DEPLOYMENT_SERVICE_PORT: "3001"
+      REACT_APP_DEPLOYMENT_SERVICE_HOST: "localhost"
