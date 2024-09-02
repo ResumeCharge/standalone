@@ -1,0 +1,6 @@
+*
+
+!compose.yml
+!README.md
+!generator-service/assets/**/*
+!.gitignore

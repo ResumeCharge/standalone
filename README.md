@@ -34,7 +34,7 @@ in Option 1.
 
 ### Built With
 
-* Java
+* Javasave
 * Thymeleaf
 * Spring
 * MongoDb
@@ -62,3 +62,5 @@ docker compose up
 ```
 http://localhost:3000
 ```
+
+You can now explore the app and create a resume. Before deploying your first website you will be prompted to add a GitHub token. a more info about generating personal access tokens can be found here: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
